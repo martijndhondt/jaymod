@@ -1550,6 +1550,45 @@ qboolean InFieldOfVision(vec3_t viewangles, float fov, vec3_t angles)
 	return qtrue;
 }
 
+// ABI fix for MSVC thiscall + hidden-pointer return convention mismatch.
+//
+// MSVC and GCC disagree on where to pass 'this' and the hidden return-value
+// pointer (hidden_ptr) for thiscall virtual functions that return a non-trivial
+// class.  MSVC convention (what OmniBot uses):
+//
+//   ECX = this
+//   [ESP+4] = hidden_ptr   (after call; [EBP+8] in callee)
+//   [ESP+8] = first explicit arg  ([EBP+12] in callee)
+//
+// GCC MinGW x86-32 convention (opposite!):
+//
+//   ECX = hidden_ptr
+//   [ESP+4] = this         ([EBP+8] in callee)
+//   [ESP+8] = first explicit arg  ([EBP+12] in callee)
+//
+// Because GameEntity has user-defined constructors, MSVC treats it as
+// non-trivial and uses hidden-pointer return for functions returning it.
+// GCC (MinGW x86-32) treats GameEntity as trivial (copy-ctor and dtor are
+// both trivial) and returns it in EAX, with no hidden pointer at all.
+//
+// Neither the "return in EAX" mismatch nor the register-swap mismatch can be
+// fixed by changing the C++ return type.  The only correct solution is to
+// write the five affected virtual functions as naked assembly thunks that
+// explicitly implement MSVC's convention and delegate to extern "C" helpers
+// for the actual logic.
+
+// Forward declarations of the extern "C" helpers called from the naked thunks.
+// Full definitions appear after the ETInterface class (search for
+// "ET_EntityFromID_impl" below).
+extern "C" {
+	obint32 ET_EntityFromID_impl(void *self, int gameId);
+	obint32 ET_EntityByName_impl(void *self, const char *name);
+	obint32 ET_GetEntityOwner_impl(void *self, obint32 entInt);
+	obint32 ET_FindEntityInSphere_impl(void *self, const float *pos,
+	                                   float radius, obint32 pStartInt,
+	                                   int classId);
+}
+
 class ETInterface : public IEngineInterface
 {
 public:
@@ -1881,6 +1920,10 @@ public:
 		static usercmd_t cmd;
 		gentity_t *bot = &g_entities[_client];
 
+		if(!bot || !bot->client) {
+			return;
+		}
+
 		// only causes problems
 		bot->client->ps.pm_flags &= ~PMF_RESPAWNED;
 
@@ -2178,120 +2221,11 @@ public:
 		return obUtilBotContentsFromGameContents(iContents);
 	}
 
-	GameEntity GetLocalGameEntity()
-	{
-		return EntityFromID(0);
-	}
-
-	GameEntity FindEntityInSphere(const float _pos[3], float _radius, GameEntity _pStart, int classId)
-	{
-		// square it to avoid the square root in the distance check.
-		gentity_t *pStartEnt = _pStart.IsValid() ? EntityFromHandle(_pStart) : 0;
-
-		const char *pClassName = 0;
-		int iPlayerClass = 0;
-		int iSpawnFlags = 0;
-
-		switch(classId)
-		{
-		case ET_CLASS_SOLDIER:
-		case ET_CLASS_MEDIC:
-		case ET_CLASS_ENGINEER:
-		case ET_CLASS_FIELDOPS:
-		case ET_CLASS_COVERTOPS:
-		case ET_CLASS_ANY:
-			iPlayerClass = classId != ET_CLASS_ANY ? classId : 0;
-			pClassName = "player";
-			break;
-			//////////////////////////////////////////////////////////////////////////
-		case ET_CLASSEX_MG42MOUNT:
-			pClassName = "misc_mg42";
-			break;
-		case ET_CLASSEX_DYNAMITE:
-			pClassName = "dynamite";
-			break;
-		case ET_CLASSEX_MINE:
-			pClassName = "landmine";
-			break;
-		case ET_CLASSEX_SATCHEL:
-			pClassName = "satchel_charge";
-			break;
-		case ET_CLASSEX_SMOKEBOMB:
-			pClassName = "smoke_bomb";
-			break;
-		case ET_CLASSEX_SMOKEMARKER:
-			pClassName = "air strike";
-			break;
-		case ET_CLASSEX_VEHICLE:
-		case ET_CLASSEX_VEHICLE_HVY:
-			iSpawnFlags = classId == ET_CLASSEX_VEHICLE_HVY ? 4 : 0;
-			pClassName = "script_mover";
-			break;
-		case ET_CLASSEX_BREAKABLE:
-			break;
-		case ET_CLASSEX_CORPSE:
-			pClassName = "corpse";
-			break;
-		case ET_CLASSEX_GRENADE:
-			pClassName = "grenade";
-			break;
-		case ET_CLASSEX_ROCKET:
-			pClassName = "rocket";
-			break;
-		case ET_CLASSEX_MORTAR:
-			pClassName = "mortar_grenade";
-			break;
-		case ET_CLASSEX_ARTY:
-			pClassName = "air strike";
-			break;
-		case ET_CLASSEX_AIRSTRIKE:
-			pClassName = "air strike";
-			break;
-		case ET_CLASSEX_FLAMECHUNK:
-			pClassName = "flamechunk";
-			break;
-		case ET_CLASSEX_M7_GRENADE:
-			pClassName = "m7_grenade";
-			break;
-		case ET_CLASSEX_GPG40_GRENADE:
-			pClassName = "gpg40_grenade";
-			break;
-		case ET_CLASSEX_HEALTHCABINET:
-			pClassName = "misc_cabinet_health";
-			break;
-		case ET_CLASSEX_AMMOCABINET:
-			pClassName = "misc_cabinet_supply";
-			break;
-		}
-
-		if(pClassName)
-		{
-			float fSqRad = _radius * _radius;
-			vec3_t toent;
-
-			while((pStartEnt = G_Find(pStartEnt, FOFS(classname), pClassName)) != NULL)
-			{
-				if(iPlayerClass && pStartEnt->client &&
-					pStartEnt->client->sess.sessionTeam != iPlayerClass)
-					continue;
-
-				if(iSpawnFlags && !(pStartEnt->spawnflags & iSpawnFlags))
-					continue;
-
-				// don't detect unusable corpses. these ents hang around until the body queue slot is re-used
-				if ( classId == ET_CLASSEX_CORPSE &&
-					(!pStartEnt->physicsObject ||
-					(pStartEnt->activator && pStartEnt->activator->client->ps.powerups[PW_OPS_DISGUISED])) )
-					continue;
-
-				VectorSubtract(_pos, pStartEnt->r.currentOrigin, toent);
-				if(VectorLengthSquared(toent) < fSqRad)
-					break;
-			}
-			return HandleFromEntity(pStartEnt);
-		}
-		return GameEntity();
-	}
+	// Naked MSVC-ABI thunks — defined outside the class; see below.
+	virtual GameEntity GetLocalGameEntity() __attribute__((naked));
+	virtual GameEntity FindEntityInSphere(const float _pos[3], float _radius,
+	                                      GameEntity _pStart, int classId)
+	                                      __attribute__((naked));
 
 	int GetEntityClass(const GameEntity _ent)
 	{
@@ -3093,58 +3027,7 @@ public:
 		return InvalidEntity;
 	}
 
-	GameEntity GetEntityOwner(const GameEntity _ent)
-	{
-		GameEntity owner;
-
-		gentity_t *pEnt = EntityFromHandle(_ent);
-		if (pEnt && pEnt->inuse)
-		{
-			// hack, when the game joins clients again after warmup, they are temporarily ET_GENERAL entities(LAME)
-			int t = pEnt->s.eType;
-			if(pEnt->client && (pEnt-g_entities)<MAX_CLIENTS)
-				t = ET_PLAYER;
-
-			switch(t)
-			{
-			case ET_ITEM:
-				{
-					if(!Q_stricmp(pEnt->classname, "team_CTF_redflag") ||
-						!Q_stricmp(pEnt->classname, "team_CTF_blueflag"))
-					{
-						int iFlagEntNum = pEnt - g_entities;
-						for(int i = 0; i < g_maxclients.integer; ++i)
-						{
-							if(g_entities[i].client && g_entities[i].client->flagParent == iFlagEntNum)
-							{
-								owner = HandleFromEntity(&g_entities[i]);
-							}
-						}
-					}
-					break;
-				}
-			case ET_GENERAL:
-			case ET_MG42_BARREL:
-				{
-					if(!Q_stricmp(pEnt->classname, "misc_mg42"))
-					{
-						if(pEnt->r.ownerNum != pEnt->s.number)
-						{
-							gentity_t *pOwner = &g_entities[pEnt->r.ownerNum];
-							if(pOwner && pOwner->active && pOwner->client && pOwner->s.eFlags & EF_MG42_ACTIVE)
-								owner = HandleFromEntity(pOwner);
-						}
-					}
-					break;
-				}
-			default:
-				// -1 means theres no owner.
-				if(pEnt->r.ownerNum < MAX_GENTITIES)
-					owner =HandleFromEntity(&g_entities[pEnt->r.ownerNum]);
-			}
-		}
-		return owner;
-	}
+	virtual GameEntity GetEntityOwner(const GameEntity _ent) __attribute__((naked));
 
 	int GetEntityTeam(const GameEntity _ent)
 	{
@@ -3646,9 +3529,7 @@ public:
 	{
 		info.m_AvailableTeams |= (1<<ET_TEAM_ALLIES);
 		info.m_AvailableTeams |= (1<<ET_TEAM_AXIS);
-
 		info.m_MaxPlayers = level.maxclients;
-
 
 		GameEntity ge;
 
@@ -4486,14 +4367,17 @@ public:
 								if((pEnt->client->sess.sessionTeam==TEAM_AXIS) &&
 									!Q_stricmp(pFlagEnt->classname, "team_CTF_redflag"))
 								{
-									GameEntity owner = GetEntityOwner(pMsg->m_Entity);
+									// Call helper directly (not through vtable) to avoid GCC/MSVC ABI mismatch
+									GameEntity owner;
+									owner.FromInt(ET_GetEntityOwner_impl(this, pMsg->m_Entity.AsInt()));
 									if(!owner.IsValid())
 										pMsg->m_CanBeGrabbed=False;
 								}
 								else if((pEnt->client->sess.sessionTeam==TEAM_ALLIES) &&
 									!Q_stricmp(pFlagEnt->classname, "team_CTF_blueflag"))
 								{
-									GameEntity owner = GetEntityOwner(pMsg->m_Entity);
+									GameEntity owner;
+									owner.FromInt(ET_GetEntityOwner_impl(this, pMsg->m_Entity.AsInt()));
 									if(!owner.IsValid())
 										pMsg->m_CanBeGrabbed=False;
 								}
@@ -4810,17 +4694,8 @@ public:
 		}
 	}
 
-	GameEntity EntityByName(const char *_name)
-	{
-		gentity_t *pEnt = G_FindByTargetname(NULL, _name);
-		return HandleFromEntity(pEnt);
-	}
-
-	GameEntity EntityFromID(const int _gameId)
-	{
-		gentity_t *pEnt = INDEXENT(_gameId);
-		return pEnt ? HandleFromEntity(pEnt) : GameEntity();
-	}
+	virtual GameEntity EntityByName(const char *_name) __attribute__((naked));
+	virtual GameEntity EntityFromID(const int _gameId) __attribute__((naked));
 
 	int IDFromEntity(const GameEntity _ent)
 	{
@@ -4932,7 +4807,8 @@ public:
 
 	const char *GetModName()
 	{
-		return OMNIBOT_MODNAME;
+		const char *ret = OMNIBOT_MODNAME;
+		return ret;
 	}
 
 	const char *GetModVers()
@@ -4952,6 +4828,330 @@ public:
 		return Omnibot_FixPath(logpath);
 	}
 };
+
+//////////////////////////////////////////////////////////////////////////////
+// Naked MSVC-ABI thunks for the five GameEntity-returning virtual functions.
+//
+// MSVC thiscall with hidden-pointer return (what OmniBot calls us with):
+//   ECX       = this
+//   [EBP+8]   = hidden_ptr  (pointer to caller's GameEntity return buffer)
+//   [EBP+12]  = first explicit arg (if any)
+//
+// Each thunk:
+//   1. Saves ESI/EDI and captures this (ECX) and hidden_ptr ([EBP+8]).
+//   2. Calls the extern "C" helper via cdecl (push args right-to-left).
+//   3. Writes the returned obint32 into *hidden_ptr.
+//   4. Returns hidden_ptr in EAX (MSVC expects this).
+//   5. Does ret $N to clean hidden_ptr + explicit args off the stack.
+//////////////////////////////////////////////////////////////////////////////
+
+__attribute__((naked))
+GameEntity ETInterface::GetLocalGameEntity()
+{
+	// No explicit args.  Stack: [EBP+8]=hidden_ptr.  ret $4.
+	__asm__ (
+		"push %ebp\n\t"
+		"movl %esp, %ebp\n\t"
+		"pushl %esi\n\t"
+		"pushl %edi\n\t"
+		"movl %ecx, %esi\n\t"         /* esi = this */
+		"movl 8(%ebp), %edi\n\t"      /* edi = hidden_ptr */
+		"pushl $0\n\t"                /* arg: gameId = 0 */
+		"pushl %esi\n\t"              /* arg: self */
+		"call _ET_EntityFromID_impl\n\t"
+		"addl $8, %esp\n\t"
+		"movl %eax, (%edi)\n\t"       /* *hidden_ptr = result */
+		"movl %edi, %eax\n\t"         /* return hidden_ptr */
+		"popl %edi\n\t"
+		"popl %esi\n\t"
+		"leave\n\t"
+		"ret $4"                      /* clean hidden_ptr(4) */
+	);
+}
+
+__attribute__((naked))
+GameEntity ETInterface::EntityFromID(const int _gameId)
+{
+	// Stack: [EBP+8]=hidden_ptr, [EBP+12]=_gameId.  ret $8.
+	__asm__ (
+		"push %ebp\n\t"
+		"movl %esp, %ebp\n\t"
+		"pushl %esi\n\t"
+		"pushl %edi\n\t"
+		"movl %ecx, %esi\n\t"
+		"movl 8(%ebp), %edi\n\t"
+		"pushl 12(%ebp)\n\t"          /* arg: _gameId */
+		"pushl %esi\n\t"              /* arg: self */
+		"call _ET_EntityFromID_impl\n\t"
+		"addl $8, %esp\n\t"
+		"movl %eax, (%edi)\n\t"
+		"movl %edi, %eax\n\t"
+		"popl %edi\n\t"
+		"popl %esi\n\t"
+		"leave\n\t"
+		"ret $8"                      /* clean hidden_ptr(4) + _gameId(4) */
+	);
+}
+
+__attribute__((naked))
+GameEntity ETInterface::EntityByName(const char *_name)
+{
+	// Stack: [EBP+8]=hidden_ptr, [EBP+12]=_name.  ret $8.
+	__asm__ (
+		"push %ebp\n\t"
+		"movl %esp, %ebp\n\t"
+		"pushl %esi\n\t"
+		"pushl %edi\n\t"
+		"movl %ecx, %esi\n\t"
+		"movl 8(%ebp), %edi\n\t"
+		"pushl 12(%ebp)\n\t"          /* arg: _name */
+		"pushl %esi\n\t"              /* arg: self */
+		"call _ET_EntityByName_impl\n\t"
+		"addl $8, %esp\n\t"
+		"movl %eax, (%edi)\n\t"
+		"movl %edi, %eax\n\t"
+		"popl %edi\n\t"
+		"popl %esi\n\t"
+		"leave\n\t"
+		"ret $8"                      /* clean hidden_ptr(4) + _name(4) */
+	);
+}
+
+__attribute__((naked))
+GameEntity ETInterface::GetEntityOwner(const GameEntity _ent)
+{
+	// Stack: [EBP+8]=hidden_ptr, [EBP+12]=_ent(4 bytes).  ret $8.
+	__asm__ (
+		"push %ebp\n\t"
+		"movl %esp, %ebp\n\t"
+		"pushl %esi\n\t"
+		"pushl %edi\n\t"
+		"movl %ecx, %esi\n\t"
+		"movl 8(%ebp), %edi\n\t"
+		"pushl 12(%ebp)\n\t"          /* arg: _ent (obint32 value) */
+		"pushl %esi\n\t"              /* arg: self */
+		"call _ET_GetEntityOwner_impl\n\t"
+		"addl $8, %esp\n\t"
+		"movl %eax, (%edi)\n\t"
+		"movl %edi, %eax\n\t"
+		"popl %edi\n\t"
+		"popl %esi\n\t"
+		"leave\n\t"
+		"ret $8"                      /* clean hidden_ptr(4) + _ent(4) */
+	);
+}
+
+__attribute__((naked))
+GameEntity ETInterface::FindEntityInSphere(const float _pos[3], float _radius,
+                                           GameEntity _pStart, int classId)
+{
+	// Stack: [EBP+8]=hidden_ptr, [EBP+12]=_pos, [EBP+16]=_radius,
+	//        [EBP+20]=_pStart(4 bytes), [EBP+24]=classId.  ret $20.
+	__asm__ (
+		"push %ebp\n\t"
+		"movl %esp, %ebp\n\t"
+		"pushl %esi\n\t"
+		"pushl %edi\n\t"
+		"movl %ecx, %esi\n\t"
+		"movl 8(%ebp), %edi\n\t"
+		"pushl 24(%ebp)\n\t"          /* arg: classId */
+		"pushl 20(%ebp)\n\t"          /* arg: _pStart (obint32) */
+		"pushl 16(%ebp)\n\t"          /* arg: _radius (float, 4 bytes) */
+		"pushl 12(%ebp)\n\t"          /* arg: _pos (pointer) */
+		"pushl %esi\n\t"              /* arg: self */
+		"call _ET_FindEntityInSphere_impl\n\t"
+		"addl $20, %esp\n\t"
+		"movl %eax, (%edi)\n\t"
+		"movl %edi, %eax\n\t"
+		"popl %edi\n\t"
+		"popl %esi\n\t"
+		"leave\n\t"
+		"ret $20"   /* clean hidden_ptr(4)+_pos(4)+_radius(4)+_pStart(4)+classId(4) */
+	);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// extern "C" helper implementations (called from the naked thunks above).
+// These contain the actual logic.  They take 'self' as void* (unused) plus
+// the explicit args, and return the entity's obint32 representation.
+//////////////////////////////////////////////////////////////////////////////
+
+extern "C" obint32 ET_EntityFromID_impl(void * /*self*/, int gameId)
+{
+	gentity_t *pEnt = INDEXENT(gameId);
+	GameEntity result = pEnt ? HandleFromEntity(pEnt) : GameEntity();
+	return result.AsInt();
+}
+
+extern "C" obint32 ET_EntityByName_impl(void * /*self*/, const char *name)
+{
+	gentity_t *pEnt = G_FindByTargetname(NULL, name);
+	return HandleFromEntity(pEnt).AsInt();
+}
+
+extern "C" obint32 ET_GetEntityOwner_impl(void * /*self*/, obint32 entInt)
+{
+	GameEntity _ent;
+	_ent.FromInt(entInt);
+	GameEntity owner;
+
+	gentity_t *pEnt = EntityFromHandle(_ent);
+	if (pEnt && pEnt->inuse)
+	{
+		// hack: when the game joins clients after warmup they are temporarily ET_GENERAL (LAME)
+		int t = pEnt->s.eType;
+		if(pEnt->client && (pEnt-g_entities)<MAX_CLIENTS)
+			t = ET_PLAYER;
+
+		switch(t)
+		{
+		case ET_ITEM:
+			{
+				if(!Q_stricmp(pEnt->classname, "team_CTF_redflag") ||
+					!Q_stricmp(pEnt->classname, "team_CTF_blueflag"))
+				{
+					int iFlagEntNum = pEnt - g_entities;
+					for(int i = 0; i < g_maxclients.integer; ++i)
+					{
+						if(g_entities[i].client && g_entities[i].client->flagParent == iFlagEntNum)
+							owner = HandleFromEntity(&g_entities[i]);
+					}
+				}
+				break;
+			}
+		case ET_GENERAL:
+		case ET_MG42_BARREL:
+			{
+				if(!Q_stricmp(pEnt->classname, "misc_mg42"))
+				{
+					if(pEnt->r.ownerNum != pEnt->s.number)
+					{
+						gentity_t *pOwner = &g_entities[pEnt->r.ownerNum];
+						if(pOwner && pOwner->active && pOwner->client &&
+							pOwner->s.eFlags & EF_MG42_ACTIVE)
+							owner = HandleFromEntity(pOwner);
+					}
+				}
+				break;
+			}
+		default:
+			if(pEnt->r.ownerNum < MAX_GENTITIES)
+				owner = HandleFromEntity(&g_entities[pEnt->r.ownerNum]);
+		}
+	}
+	return owner.AsInt();
+}
+
+extern "C" obint32 ET_FindEntityInSphere_impl(void * /*self*/, const float *pos,
+                                              float radius, obint32 pStartInt,
+                                              int classId)
+{
+	GameEntity pStartGE;
+	pStartGE.FromInt(pStartInt);
+	gentity_t *pStartEnt = pStartGE.IsValid() ? EntityFromHandle(pStartGE) : 0;
+
+	const char *pClassName = 0;
+	int iPlayerClass = 0;
+	int iSpawnFlags = 0;
+
+	switch(classId)
+	{
+	case ET_CLASS_SOLDIER:
+	case ET_CLASS_MEDIC:
+	case ET_CLASS_ENGINEER:
+	case ET_CLASS_FIELDOPS:
+	case ET_CLASS_COVERTOPS:
+	case ET_CLASS_ANY:
+		iPlayerClass = classId != ET_CLASS_ANY ? classId : 0;
+		pClassName = "player";
+		break;
+	case ET_CLASSEX_MG42MOUNT:
+		pClassName = "misc_mg42";
+		break;
+	case ET_CLASSEX_DYNAMITE:
+		pClassName = "dynamite";
+		break;
+	case ET_CLASSEX_MINE:
+		pClassName = "landmine";
+		break;
+	case ET_CLASSEX_SATCHEL:
+		pClassName = "satchel_charge";
+		break;
+	case ET_CLASSEX_SMOKEBOMB:
+		pClassName = "smoke_bomb";
+		break;
+	case ET_CLASSEX_SMOKEMARKER:
+		pClassName = "air strike";
+		break;
+	case ET_CLASSEX_VEHICLE:
+	case ET_CLASSEX_VEHICLE_HVY:
+		iSpawnFlags = classId == ET_CLASSEX_VEHICLE_HVY ? 4 : 0;
+		pClassName = "script_mover";
+		break;
+	case ET_CLASSEX_BREAKABLE:
+		break;
+	case ET_CLASSEX_CORPSE:
+		pClassName = "corpse";
+		break;
+	case ET_CLASSEX_GRENADE:
+		pClassName = "grenade";
+		break;
+	case ET_CLASSEX_ROCKET:
+		pClassName = "rocket";
+		break;
+	case ET_CLASSEX_MORTAR:
+		pClassName = "mortar_grenade";
+		break;
+	case ET_CLASSEX_ARTY:
+	case ET_CLASSEX_AIRSTRIKE:
+		pClassName = "air strike";
+		break;
+	case ET_CLASSEX_FLAMECHUNK:
+		pClassName = "flamechunk";
+		break;
+	case ET_CLASSEX_M7_GRENADE:
+		pClassName = "m7_grenade";
+		break;
+	case ET_CLASSEX_GPG40_GRENADE:
+		pClassName = "gpg40_grenade";
+		break;
+	case ET_CLASSEX_HEALTHCABINET:
+		pClassName = "misc_cabinet_health";
+		break;
+	case ET_CLASSEX_AMMOCABINET:
+		pClassName = "misc_cabinet_supply";
+		break;
+	}
+
+	if(pClassName)
+	{
+		float fSqRad = radius * radius;
+		vec3_t toent;
+
+		while((pStartEnt = G_Find(pStartEnt, FOFS(classname), pClassName)) != NULL)
+		{
+			if(iPlayerClass && pStartEnt->client &&
+				pStartEnt->client->sess.sessionTeam != iPlayerClass)
+				continue;
+
+			if(iSpawnFlags && !(pStartEnt->spawnflags & iSpawnFlags))
+				continue;
+
+			if(classId == ET_CLASSEX_CORPSE &&
+				(!pStartEnt->physicsObject ||
+				(pStartEnt->activator &&
+				 pStartEnt->activator->client->ps.powerups[PW_OPS_DISGUISED])))
+				continue;
+
+			VectorSubtract(pos, pStartEnt->r.currentOrigin, toent);
+			if(VectorLengthSquared(toent) < fSqRad)
+				break;
+		}
+		return HandleFromEntity(pStartEnt).AsInt();
+	}
+	GameEntity invalid;
+	return invalid.AsInt();
+}
 
 void Bot_Interface_InitHandles()
 {

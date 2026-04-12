@@ -17,8 +17,13 @@ GCC/ = /opt/gcc-4.1.2-mingw/i686-mingw32/
 
 CXX.opt.PIC =
 CXX.opt.vis =
+CXX.opt.std = -fno-exceptions -fno-rtti -std=gnu++14
+CXX.opt.O   = -O2
 
-CXX.ldopts.so = -shared
+CXX.L           += $(GCC/)i686-w64-mingw32/lib
+
+CXX.ldopts.so    = -shared -static-libgcc -static-libstdc++
+CXX.fnLinkSo.>>  = -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive,-Bdynamic
 
 ###############################################################################
 

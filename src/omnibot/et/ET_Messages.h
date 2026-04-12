@@ -13,10 +13,7 @@
 
 #include <omnibot/common/Base_Messages.h>
 
-#ifdef _MSC_VER
-#pragma pack(push)
-#pragma pack(4)
-#endif
+#pragma pack(push, 4)
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -244,8 +241,6 @@ struct ET_DisableBotPush
 	int			m_Push;
 };
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif
 
 #endif
