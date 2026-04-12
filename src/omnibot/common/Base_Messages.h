@@ -11,10 +11,7 @@
 
 #include <omnibot/common/Omni-Bot_Types.h>
 
-#ifdef _MSC_VER
-#pragma pack(push)
-#pragma pack(4)
-#endif
+#pragma pack(push, 4)
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -576,8 +573,6 @@ struct Event_EntLeaveRadius
 	GameEntity	m_Entity;
 };
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif
 
 #endif

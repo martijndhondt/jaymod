@@ -18,7 +18,7 @@ $(MODULE.PAK.out.bin): $(MODULE.PAK.stage/)%: $(PROJECT/)pak/%
 	$(call fn.cp,$<,$@)
 
 $(MODULE.PAK.out.m4): $(MODULE.PAK.stage/)%: $(PROJECT/)pak/%.m4
-	m4 -I $(BUILD/)m4 $< > $@
+	python $(PROJECT/)project/m4expand.py $(BUILD/)m4 $< > $@
 ifneq ($(PROJECT.platformName),OSX)
 	chmod --reference=$< $@
 endif
