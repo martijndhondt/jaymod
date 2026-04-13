@@ -32,19 +32,45 @@ With these changes, bots successfully connect and play on an ET Legacy dedicated
 
 # Compiling
 
-The mod has a very powerful make system that can cross-compile the mod for Linux, Windows (via mingw) and OSX. There are also specialty binaries for specific CPU
-platforms for each of these platforms.
+The mod uses a GNU make-based build system originally designed (2006) to cross-compile for Linux, Windows (MinGW), and OSX.
 
-Information about the build system can be found in the [build system notes](https://raw.githubusercontent.com/budjb/jaymod/master/notes/BuildSystem.txt).
+> **Note:** The [original build system document](notes/BuildSystem.txt) is largely historical. Many things it describes no longer apply: the project moved from SVN to Git, Windows builds now use MinGW64 (MSYS2) instead of MSVC + Cygwin, PowerPC/OSX targets are long gone, and the multi-machine "hub host" release process is not needed. The sections on make targets (`make`, `make clean`, `make debug`, `make release`), the `PLATFORM` / `VARIANT` / `GCC/=` variables, and the `build/` output directory separation are still accurate.
 
-Some of the compilation and system libraries required to make a complete build have been lost to time. If anyone would like to minimalize the build system and provide
-compilation instructions, it would be much appreciated.
+## Windows (MinGW64 / MSYS2) — recommended
 
-To build the Windows DLL with MinGW:
+Install [MSYS2](https://www.msys2.org/) and the MinGW32 toolchain:
 
+```bash
+pacman -S mingw-w64-i686-toolchain
 ```
+
+Then build from the MSYS2 shell:
+
+```bash
 mingw32-make.exe PLATFORM=mingw "GCC/=/path/to/mingw32/"
+# Example using the default MSYS2 install path:
+mingw32-make.exe PLATFORM=mingw "GCC/=/c/msys64/mingw32/"
 ```
+
+The output DLL is placed at `build.mingw/game/qagame_mp_x86.dll`. No external runtime DLLs are needed — `libwinpthread` is linked statically.
+
+## Linux
+
+```bash
+make
+```
+
+Requires GCC and the standard GNU toolchain. Produces `build/game/qagame_mp_x86.so`.
+
+## Make targets
+
+| Target | Description |
+|---|---|
+| `make` / `make all` | Compile and link everything |
+| `make clean` | Remove all build output (run after changing headers) |
+| `make debug` | Build with debug symbols (`VARIANT=debug`) |
+| `make release` | Optimised release build (`VARIANT=release`) |
+| `make pkg` | Build + create distributable archive |
 
 # License
 
