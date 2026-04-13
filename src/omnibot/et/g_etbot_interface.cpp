@@ -2221,11 +2221,28 @@ public:
 		return obUtilBotContentsFromGameContents(iContents);
 	}
 
-	// Naked MSVC-ABI thunks — defined outside the class; see below.
+	// On Windows, OmniBot is MSVC-compiled and uses a different thiscall
+	// convention for GameEntity-returning virtuals (see ABI comment above).
+	// Naked thunks bridge the gap.  On Linux everything is GCC so no fix needed.
+#ifdef _WIN32
 	virtual GameEntity GetLocalGameEntity() __attribute__((naked));
 	virtual GameEntity FindEntityInSphere(const float _pos[3], float _radius,
 	                                      GameEntity _pStart, int classId)
 	                                      __attribute__((naked));
+#else
+	virtual GameEntity GetLocalGameEntity()
+	{
+		GameEntity r; r.FromInt(ET_EntityFromID_impl(this, 0)); return r;
+	}
+	virtual GameEntity FindEntityInSphere(const float _pos[3], float _radius,
+	                                      GameEntity _pStart, int classId)
+	{
+		GameEntity r;
+		r.FromInt(ET_FindEntityInSphere_impl(this, _pos, _radius,
+		                                     _pStart.AsInt(), classId));
+		return r;
+	}
+#endif
 
 	int GetEntityClass(const GameEntity _ent)
 	{
@@ -3027,7 +3044,14 @@ public:
 		return InvalidEntity;
 	}
 
+#ifdef _WIN32
 	virtual GameEntity GetEntityOwner(const GameEntity _ent) __attribute__((naked));
+#else
+	virtual GameEntity GetEntityOwner(const GameEntity _ent)
+	{
+		GameEntity r; r.FromInt(ET_GetEntityOwner_impl(this, _ent.AsInt())); return r;
+	}
+#endif
 
 	int GetEntityTeam(const GameEntity _ent)
 	{
@@ -4694,8 +4718,19 @@ public:
 		}
 	}
 
+#ifdef _WIN32
 	virtual GameEntity EntityByName(const char *_name) __attribute__((naked));
 	virtual GameEntity EntityFromID(const int _gameId) __attribute__((naked));
+#else
+	virtual GameEntity EntityByName(const char *_name)
+	{
+		GameEntity r; r.FromInt(ET_EntityByName_impl(this, _name)); return r;
+	}
+	virtual GameEntity EntityFromID(const int _gameId)
+	{
+		GameEntity r; r.FromInt(ET_EntityFromID_impl(this, _gameId)); return r;
+	}
+#endif
 
 	int IDFromEntity(const GameEntity _ent)
 	{
@@ -4830,6 +4865,10 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////////////////
+// Naked MSVC-ABI thunks — Windows only.  On Linux, OmniBot is GCC-compiled
+// and shares our calling convention, so no thunks are needed.
+#ifdef _WIN32
+
 // Naked MSVC-ABI thunks for the five GameEntity-returning virtual functions.
 //
 // MSVC thiscall with hidden-pointer return (what OmniBot calls us with):
@@ -4970,10 +5009,14 @@ GameEntity ETInterface::FindEntityInSphere(const float _pos[3], float _radius,
 	);
 }
 
+#endif // _WIN32
+
 //////////////////////////////////////////////////////////////////////////////
-// extern "C" helper implementations (called from the naked thunks above).
-// These contain the actual logic.  They take 'self' as void* (unused) plus
-// the explicit args, and return the entity's obint32 representation.
+// extern "C" helper implementations.
+// These contain the actual logic.  On Windows they are called from the naked
+// thunks above; on Linux they are called directly from the virtual functions.
+// They take 'self' as void* (unused) plus the explicit args, and return the
+// entity's obint32 representation.
 //////////////////////////////////////////////////////////////////////////////
 
 extern "C" obint32 ET_EntityFromID_impl(void * /*self*/, int gameId)
