@@ -2,6 +2,13 @@
 
 This is the source for the last release of Jaymod, which is version 2.0.0.
 
+## Releases
+
+| Version | Tag | Notes |
+|---|---|---|
+| [2.2.1 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.1-etlegacy) | `v2.2.1-etlegacy` | announcehp built-in, CI full package builds |
+| [2.2.0 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.0-etlegacy) | `v2.2.0-etlegacy` | OmniBot ABI fix, GCC/MinGW support, GitHub Actions CI |
+
 # Credits
 
 Jaymod was originally created and maintained by **budjb** and the Jaymod development team. Many thanks to all contributors who worked on the mod over the years — without their effort this codebase would not exist.
