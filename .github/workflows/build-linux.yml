@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to upload the .so to (e.g. v2.2.0-etlegacy). Leave blank to only produce an artifact.'
+        description: 'Release tag to upload artifacts to (e.g. v2.2.0-etlegacy). Leave blank to only produce artifacts.'
         required: false
 
 jobs:
@@ -20,23 +20,27 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y gcc-multilib g++-multilib make m4 python3
+          sudo apt-get install -y gcc-multilib g++-multilib make m4 python3 zip
 
-      - name: Build
-        run: make
+      - name: Build full package
+        run: make pkg
 
-      - name: Locate game module
-        id: find_so
+      - name: Locate artifacts
+        id: find_artifacts
         run: |
           SO=build/game/qagame.mp.i386.so
-          echo "path=$SO" >> "$GITHUB_OUTPUT"
-          ls -lh "$SO"
+          TAR=$(ls build/jaymod-*.tar.gz)
+          echo "so=$SO" >> "$GITHUB_OUTPUT"
+          echo "tar=$TAR" >> "$GITHUB_OUTPUT"
+          ls -lh "$SO" "$TAR"
 
-      - name: Upload artifact (always)
+      - name: Upload artifacts (always)
         uses: actions/upload-artifact@v4
         with:
-          name: qagame.mp.i386.so
-          path: ${{ steps.find_so.outputs.path }}
+          name: jaymod-linux
+          path: |
+            ${{ steps.find_artifacts.outputs.so }}
+            ${{ steps.find_artifacts.outputs.tar }}
 
       - name: Upload to GitHub release
         if: github.event_name == 'release' || inputs.tag != ''
@@ -48,7 +52,11 @@ jobs:
             TAG="${{ inputs.tag }}"
           fi
           echo "Uploading to release: $TAG"
+          SO="${{ steps.find_artifacts.outputs.so }}"
+          TAR="${{ steps.find_artifacts.outputs.tar }}"
+          TARNAME=$(basename "$TAR")
           gh release upload "$TAG" \
-            "${{ steps.find_so.outputs.path }}#qagame.mp.i386.so" \
+            "$SO#qagame.mp.i386.so" \
+            "$TAR#$TARNAME" \
             --clobber \
             --repo "${{ github.repository }}"

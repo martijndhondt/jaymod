@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to upload the .dll to (e.g. v2.2.0-etlegacy). Leave blank to only produce an artifact.'
+        description: 'Release tag to upload artifacts to (e.g. v2.2.0-etlegacy). Leave blank to only produce artifacts.'
         required: false
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y make m4 python3 mingw-w64
+          sudo apt-get install -y make m4 python3 mingw-w64 zip
 
       - name: Set up MinGW toolchain layout
         run: |
@@ -34,22 +34,26 @@ jobs:
           # The lib path $(GCC/)i686-w64-mingw32/lib must resolve correctly.
           ln -s /usr/i686-w64-mingw32 /tmp/mingw/i686-w64-mingw32
 
-      - name: Build
+      - name: Build full package
         run: |
-          make PLATFORM=mingw "GCC/=/tmp/mingw/"
+          make PLATFORM=mingw "GCC/=/tmp/mingw/" pkg
 
-      - name: Locate game module
-        id: find_dll
+      - name: Locate artifacts
+        id: find_artifacts
         run: |
           DLL=build.mingw/game/qagame_mp_x86.dll
-          echo "path=$DLL" >> "$GITHUB_OUTPUT"
-          ls -lh "$DLL"
+          TAR=$(ls build.mingw/jaymod-*.tar.gz)
+          echo "dll=$DLL" >> "$GITHUB_OUTPUT"
+          echo "tar=$TAR" >> "$GITHUB_OUTPUT"
+          ls -lh "$DLL" "$TAR"
 
-      - name: Upload artifact (always)
+      - name: Upload artifacts (always)
         uses: actions/upload-artifact@v4
         with:
-          name: qagame_mp_x86.dll
-          path: ${{ steps.find_dll.outputs.path }}
+          name: jaymod-windows
+          path: |
+            ${{ steps.find_artifacts.outputs.dll }}
+            ${{ steps.find_artifacts.outputs.tar }}
 
       - name: Upload to GitHub release
         if: github.event_name == 'release' || inputs.tag != ''
@@ -61,7 +65,11 @@ jobs:
             TAG="${{ inputs.tag }}"
           fi
           echo "Uploading to release: $TAG"
+          DLL="${{ steps.find_artifacts.outputs.dll }}"
+          TAR="${{ steps.find_artifacts.outputs.tar }}"
+          TARNAME=$(basename "$TAR")
           gh release upload "$TAG" \
-            "${{ steps.find_dll.outputs.path }}#qagame_mp_x86.dll" \
+            "$DLL#qagame_mp_x86.dll" \
+            "$TAR#$TARNAME" \
             --clobber \
             --repo "${{ github.repository }}"
