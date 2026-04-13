@@ -22,9 +22,21 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y make m4 python3 mingw-w64
 
+      - name: Set up MinGW toolchain layout
+        run: |
+          # The make system constructs CXX as $(GCC/)bin/g++ and strip as
+          # $(GCC/)bin/strip, but Ubuntu's mingw-w64 puts the cross-compiler
+          # binaries in /usr/bin/ with an i686-w64-mingw32- prefix.
+          # Create a wrapper directory that matches the expected layout.
+          mkdir -p /tmp/mingw/bin
+          ln -s /usr/bin/i686-w64-mingw32-g++-posix /tmp/mingw/bin/g++
+          ln -s /usr/bin/i686-w64-mingw32-strip      /tmp/mingw/bin/strip
+          # The lib path $(GCC/)i686-w64-mingw32/lib must resolve correctly.
+          ln -s /usr/i686-w64-mingw32 /tmp/mingw/i686-w64-mingw32
+
       - name: Build
         run: |
-          make PLATFORM=mingw "GCC/=/usr/i686-w64-mingw32/"
+          make PLATFORM=mingw "GCC/=/tmp/mingw/"
 
       - name: Locate game module
         id: find_dll
