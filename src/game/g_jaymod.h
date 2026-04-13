@@ -78,6 +78,7 @@ extern vmCvar_t	vote_voteBased;
 extern vmCvar_t	vote_minPercent;
 extern vmCvar_t g_muteTime;
 extern vmCvar_t g_antiwarp;
+extern vmCvar_t g_announceHP;
 
 // Class specific cvars
 extern vmCvar_t	g_engineers;

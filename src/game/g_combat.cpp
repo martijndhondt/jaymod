@@ -643,6 +643,14 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			}
 
 			attacker->client->lastKillTime = level.time;
+
+			// Announce killer's remaining HP to the victim
+			if( g_announceHP.integer && attacker->client ) {
+				int hp = attacker->client->ps.stats[STAT_HEALTH];
+				trap_SendServerCommand( self-g_entities,
+					va( "cp \"%s^7 had ^3%i HP^7 left\n\"",
+						attacker->client->pers.netname, hp ) );
+			}
 		}
 	} else {
 		AddScore( self, -1 );

@@ -242,6 +242,7 @@ vmCvar_t		vote_voteBased;
 vmCvar_t		vote_minPercent;
 vmCvar_t        g_muteTime;
 vmCvar_t        g_antiwarp;
+vmCvar_t        g_announceHP;
 
 vmCvar_t        sv_maxRate;
 
@@ -343,6 +344,7 @@ cvarTable_t		gameCvarTable[] = {
 	{ &g_vulnerableWeapons,	"g_vulnerableWeapons",	"0",		0 },
     { &g_muteTime,          "g_muteTime",           "0",        0 },
     { &g_antiwarp,          "g_antiwarp",           "1",        0 },
+    { &g_announceHP,        "g_announceHP",         "1",        CVAR_ARCHIVE },
 
     { &sv_maxRate,          "sv_maxRate",           "25000",    CVAR_SYSTEMINFO | CVAR_ARCHIVE },
 
