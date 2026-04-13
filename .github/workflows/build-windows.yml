@@ -1,0 +1,55 @@
+name: Build Windows
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to upload the .dll to (e.g. v2.2.0-etlegacy). Leave blank to only produce an artifact.'
+        required: false
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y make m4 python3 mingw-w64
+
+      - name: Build
+        run: |
+          make PLATFORM=mingw "GCC/=/usr/i686-w64-mingw32/"
+
+      - name: Locate game module
+        id: find_dll
+        run: |
+          DLL=build.mingw/game/qagame_mp_x86.dll
+          echo "path=$DLL" >> "$GITHUB_OUTPUT"
+          ls -lh "$DLL"
+
+      - name: Upload artifact (always)
+        uses: actions/upload-artifact@v4
+        with:
+          name: qagame_mp_x86.dll
+          path: ${{ steps.find_dll.outputs.path }}
+
+      - name: Upload to GitHub release
+        if: github.event_name == 'release' || inputs.tag != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          if [ -z "$TAG" ]; then
+            TAG="${{ inputs.tag }}"
+          fi
+          echo "Uploading to release: $TAG"
+          gh release upload "$TAG" \
+            "${{ steps.find_dll.outputs.path }}#qagame_mp_x86.dll" \
+            --clobber \
+            --repo "${{ github.repository }}"
