@@ -20,7 +20,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y gcc-multilib g++-multilib make m4 python3 zip
+          sudo apt-get install -y gcc-multilib g++-multilib make m4 python3 python-is-python3 zip
 
       - name: Build full package
         run: make pkg

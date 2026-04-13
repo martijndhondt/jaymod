@@ -20,7 +20,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y make m4 python3 mingw-w64 zip
+          sudo apt-get install -y make m4 python3 python-is-python3 mingw-w64 zip
 
       - name: Set up MinGW toolchain layout
         run: |
