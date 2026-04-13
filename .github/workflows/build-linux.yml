@@ -1,0 +1,54 @@
+name: Build Linux
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to upload the .so to (e.g. v2.2.0-etlegacy). Leave blank to only produce an artifact.'
+        required: false
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y gcc-multilib g++-multilib make m4 python3
+
+      - name: Build
+        run: make
+
+      - name: Locate game module
+        id: find_so
+        run: |
+          SO=build/game/qagame.mp.i386.so
+          echo "path=$SO" >> "$GITHUB_OUTPUT"
+          ls -lh "$SO"
+
+      - name: Upload artifact (always)
+        uses: actions/upload-artifact@v4
+        with:
+          name: qagame.mp.i386.so
+          path: ${{ steps.find_so.outputs.path }}
+
+      - name: Upload to GitHub release
+        if: github.event_name == 'release' || inputs.tag != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          if [ -z "$TAG" ]; then
+            TAG="${{ inputs.tag }}"
+          fi
+          echo "Uploading to release: $TAG"
+          gh release upload "$TAG" \
+            "${{ steps.find_so.outputs.path }}#qagame.mp.i386.so" \
+            --clobber \
+            --repo "${{ github.repository }}"
