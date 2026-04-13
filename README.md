@@ -37,6 +37,25 @@ Additional fixes included:
 
 With these changes, bots successfully connect and play on an ET Legacy dedicated server using the GCC-compiled `qagame_mp_x86.dll`.
 
+# Announce HP
+
+Jaymod 2.2.1 implements the popular `announcehp` feature directly in the game code (`src/game/g_combat.cpp`), without requiring a separate Lua script or server-side plugin.
+
+When a player is killed by an enemy, the victim receives a center-print message showing the killer's name and their remaining HP:
+
+```
+PlayerName had 3 HP left
+```
+
+**Cvar:** `g_announceHP` (default `1`)
+
+| Value | Behaviour |
+|---|---|
+| `1` | Enabled (default) |
+| `0` | Disabled |
+
+The message only appears for enemy kills — not for teamkills or self-damage.
+
 # Compiling
 
 The mod uses a GNU make-based build system originally designed (2006) to cross-compile for Linux, Windows (MinGW), and OSX.
