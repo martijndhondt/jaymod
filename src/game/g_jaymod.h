@@ -79,6 +79,7 @@ extern vmCvar_t	vote_minPercent;
 extern vmCvar_t g_muteTime;
 extern vmCvar_t g_antiwarp;
 extern vmCvar_t g_announceHP;
+extern vmCvar_t g_dynamiteTimer;
 
 // Class specific cvars
 extern vmCvar_t	g_engineers;
@@ -201,6 +202,7 @@ void     G_ApplyCustomRanks      ( gclient_t* );
 void     G_AuthCheck             ( gentity_t*, char* );
 void     G_Banners               ( );
 void     G_BinocWar              ( qboolean );
+void     G_RunDynamiteTimers     ( );
 void     G_ChatShortcuts         ( gentity_t* , string& );
 void     G_FallDamage            ( gentity_t*, int );
 void     G_InitCustomLevels      ( );

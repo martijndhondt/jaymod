@@ -243,6 +243,7 @@ vmCvar_t		vote_minPercent;
 vmCvar_t        g_muteTime;
 vmCvar_t        g_antiwarp;
 vmCvar_t        g_announceHP;
+vmCvar_t        g_dynamiteTimer;
 
 vmCvar_t        sv_maxRate;
 
@@ -345,6 +346,7 @@ cvarTable_t		gameCvarTable[] = {
     { &g_muteTime,          "g_muteTime",           "0",        0 },
     { &g_antiwarp,          "g_antiwarp",           "1",        0 },
     { &g_announceHP,        "g_announceHP",         "1",        CVAR_ARCHIVE },
+    { &g_dynamiteTimer,     "g_dynamiteTimer",      "1",        CVAR_ARCHIVE },
 
     { &sv_maxRate,          "sv_maxRate",           "25000",    CVAR_SYSTEMINFO | CVAR_ARCHIVE },
 
@@ -3969,6 +3971,7 @@ void G_RunFrame( int levelTime ) {
 	// Jaybird - Jaymod per-server-frame stuff.
 	G_Banners();
 	G_BinocWar(qfalse);
+	G_RunDynamiteTimers();
     cmd::CrazyGravity::run();
 	G_Update_CS_Airstrikes();
 
