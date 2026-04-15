@@ -6,6 +6,7 @@ This is the source for the last release of Jaymod, which is version 2.0.0.
 
 | Version | Tag | Notes |
 |---|---|---|
+| [2.2.2 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.2-etlegacy) | `v2.2.2-etlegacy` | dynamite countdown timer built-in |
 | [2.2.1 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.1-etlegacy) | `v2.2.1-etlegacy` | announcehp built-in, CI full package builds |
 | [2.2.0 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.0-etlegacy) | `v2.2.0-etlegacy` | OmniBot ABI fix, GCC/MinGW support, GitHub Actions CI |
 
@@ -36,6 +37,35 @@ Additional fixes included:
 - Internal calls to `GetEntityOwner` within the game module now call the helper directly instead of going through the vtable
 
 With these changes, bots successfully connect and play on an ET Legacy dedicated server using the GCC-compiled `qagame_mp_x86.dll`.
+
+# Dynamite Timer
+
+Jaymod 2.2.2 adds a built-in dynamite countdown timer implemented directly in the game code (`src/game/g_dynamitetimer.cpp`), without requiring a Lua script.
+
+When dynamite is planted and armed, players receive a center-print message each second showing the time remaining until detonation:
+
+```
+Dynamite: 30 seconds!
+...
+Dynamite: ^310 seconds!   (yellow)
+...
+Dynamite: ^15 seconds!    (red)
+```
+
+**Who sees the timer:**
+
+| Player | When |
+|---|---|
+| Planting team | Full countdown from the moment it is armed |
+| Defending team | Last 10 seconds only |
+| Spectators | Never |
+
+**Cvar:** `g_dynamiteTimer` (default `1`)
+
+| Value | Behaviour |
+|---|---|
+| `1` | Enabled (default) |
+| `0` | Disabled |
 
 # Announce HP
 
