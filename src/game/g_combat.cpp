@@ -647,9 +647,16 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			// Announce killer's remaining HP to the victim
 			if( g_announceHP.integer && attacker->client ) {
 				int hp = attacker->client->ps.stats[STAT_HEALTH];
-				trap_SendServerCommand( self-g_entities,
-					va( "cp \"%s^7 had ^3%i HP^7 left\n\"",
-						attacker->client->pers.netname, hp ) );
+				const char *msg = va( "\"%s^7 had ^3%i HP^7 left\n\"",
+					attacker->client->pers.netname, hp );
+				const char *cmd;
+				switch( g_announceHP.integer ) {
+					case 2:  cmd = "cpm"; break;  // left-side popup (kill message area)
+					case 3:  cmd = "bp";  break;  // top banner strip
+					case 4:  cmd = "print"; break; // console notification
+					default: cmd = "cp";  break;  // center-print (default)
+				}
+				trap_SendServerCommand( self-g_entities, va( "%s %s", cmd, msg ) );
 			}
 		}
 	} else {
