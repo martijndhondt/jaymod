@@ -1,6 +1,8 @@
 # Jaymod
 
 ![Downloads](https://img.shields.io/github/downloads/martijndhondt/jaymod/total)
+![Build Linux](https://github.com/martijndhondt/jaymod/actions/workflows/build-linux.yml/badge.svg)
+![Build Windows](https://github.com/martijndhondt/jaymod/actions/workflows/build-windows.yml/badge.svg)
 
 This is the source for the last release of Jaymod, which is version 2.0.0.
 
