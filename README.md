@@ -1,11 +1,14 @@
 # Jaymod
 
+![Downloads](https://img.shields.io/github/downloads/martijndhondt/jaymod/total)
+
 This is the source for the last release of Jaymod, which is version 2.0.0.
 
 ## Releases
 
 | Version | Tag | Notes |
 |---|---|---|
+| [2.2.3](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.3) | `v2.2.3` | configurable announce HP display position |
 | [2.2.2 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.2-etlegacy) | `v2.2.2-etlegacy` | dynamite countdown timer built-in |
 | [2.2.1 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.1-etlegacy) | `v2.2.1-etlegacy` | announcehp built-in, CI full package builds |
 | [2.2.0 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.0-etlegacy) | `v2.2.0-etlegacy` | OmniBot ABI fix, GCC/MinGW support, GitHub Actions CI |
@@ -71,20 +74,23 @@ Dynamite: ^15 seconds!    (red)
 
 Jaymod 2.2.1 implements the popular `announcehp` feature directly in the game code (`src/game/g_combat.cpp`), without requiring a separate Lua script or server-side plugin.
 
-When a player is killed by an enemy, the victim receives a center-print message showing the killer's name and their remaining HP:
+When a player is killed by an enemy, the victim receives a message showing the killer's name and their remaining HP:
 
 ```
 PlayerName had 3 HP left
 ```
 
-**Cvar:** `g_announceHP` (default `1`)
+The message only appears for enemy kills — not for teamkills or self-damage.
+
+**Cvar:** `g_announceHP` — controls both enablement and display position (default `1`)
 
 | Value | Behaviour |
 |---|---|
-| `1` | Enabled (default) |
 | `0` | Disabled |
-
-The message only appears for enemy kills — not for teamkills or self-damage.
+| `1` | Center-print — large text, upper-center of screen **(default)** |
+| `2` | Popup message — stacks in the left-side kill-message area |
+| `3` | Banner print — small text at top of screen |
+| `4` | Console notification — top-left overlay |
 
 # Compiling
 
