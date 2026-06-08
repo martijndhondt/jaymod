@@ -1792,12 +1792,12 @@ static void CG_DrawWeapReticle(void) {
 		int sideWidth = SCREEN_CENTER - 240; // 240 = 480 / 2
 
 		// sides
-		CG_FillRect (0, 0, sideWidth, 480, color);
-		CG_FillRect (SCREEN_WIDTH - sideWidth, 0, sideWidth, 480, color);
+		CG_FillRect (0, 0, sideWidth, SCREEN_HEIGHT, color);
+		CG_FillRect (SCREEN_WIDTH - sideWidth, 0, sideWidth, SCREEN_HEIGHT, color);
 
 		// center
 		if(cgs.media.reticleShaderSimple)
-			CG_DrawPic( sideWidth, 0, 480, 480, cgs.media.reticleShaderSimple );
+			CG_DrawPic( sideWidth, 0, SCREEN_HEIGHT, SCREEN_HEIGHT, cgs.media.reticleShaderSimple );
 
 /*		if(cgs.media.reticleShaderSimpleQ) {
 			trap_R_DrawStretchPic( x,	0, w, h, 0, 0, 1, 1, cgs.media.reticleShaderSimpleQ );	// tl
@@ -1823,12 +1823,12 @@ static void CG_DrawWeapReticle(void) {
 		int sideWidth = SCREEN_CENTER - 240; // 240 = 480 / 2
 
 		// sides
-		CG_FillRect (0, 0, sideWidth, 480, color);
-		CG_FillRect (SCREEN_WIDTH - sideWidth, 0, sideWidth, 480, color);
+		CG_FillRect (0, 0, sideWidth, SCREEN_HEIGHT, color);
+		CG_FillRect (SCREEN_WIDTH - sideWidth, 0, sideWidth, SCREEN_HEIGHT, color);
 
 		// center
 		if(cgs.media.reticleShaderSimple)
-			CG_DrawPic( sideWidth, 0, 480, 480, cgs.media.reticleShaderSimple );
+			CG_DrawPic( sideWidth, 0, SCREEN_HEIGHT, SCREEN_HEIGHT, cgs.media.reticleShaderSimple );
 
 		// hairs
 		CG_FillRect (sideWidth + 4, SCREEN_HEIGHT/2 - 1, 177, 2, color);	// left
@@ -4381,7 +4381,7 @@ static int CG_PlayerAmmoValue( int *ammo, int *clips, int *akimboammo ) {
 #define HEAD_PITCHANGLE 2.5
 static void CG_DrawPlayerStatusHead( void ) {
 	hudHeadAnimNumber_t anim;
-	rectDef_t headRect =		{ 44, 480 - 92, 62, 80 };
+	rectDef_t headRect =		{ 44, SCREEN_HEIGHT - 92, 62, 80 };
 //	rectDef_t headHintRect =	{ 40, 480 - 22, 20, 20 };
 	bg_character_t* character = CG_CharacterForPlayerstate( &cg.snap->ps );
 	bg_character_t* headcharacter = BG_GetCharacter( cgs.clientinfo[ cg.snap->ps.clientNum ].team, cgs.clientinfo[ cg.snap->ps.clientNum ].cls );
@@ -4784,7 +4784,7 @@ static void CG_DrawPlayerStats( void ) {
             trap_R_SetColor(colorBlack);
 			CG_DrawPic( 44 + 1, SCREEN_HEIGHT - 92 + (i * (SKILL_ICON_SIZE + 10)) + 1, SKILL_ICON_SIZE, SKILL_ICON_SIZE, cgs.media.skillPics[skill] );
             trap_R_SetColor(NULL);
-            CG_DrawPic( 44, 480 - 92 + (i * (SKILL_ICON_SIZE + 10)), SKILL_ICON_SIZE, SKILL_ICON_SIZE, cgs.media.skillPics[skill] );
+            CG_DrawPic( 44, SCREEN_HEIGHT - 92 + (i * (SKILL_ICON_SIZE + 10)), SKILL_ICON_SIZE, SKILL_ICON_SIZE, cgs.media.skillPics[skill] );
 			CG_Text_Paint_Ext( 44+3, SCREEN_HEIGHT - 92 + 23 + (i * (SKILL_ICON_SIZE+10)), 0.2f, 0.2f, colorWhite, va("%i", min(ci->skill[skill],5)), 0, 0, ITEM_TEXTSTYLE_SHADOWED, &cgs.media.limboFont1 );
 		}
 	}

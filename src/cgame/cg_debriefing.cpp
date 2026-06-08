@@ -1506,7 +1506,7 @@ void CG_DebriefingPlayerList_Draw( panel_button_t* button ) {
 
 		if( cgs.dbSelectedClient == cgs.dbSortedClients[i + cgs.dbPlayerListOffset] ) {
 			vec4_t clr = { 1.f, 1.f, 1.f, 0.3f };
-			CG_FillRect( button->rect.x, y - 10, 640 - 10 - 8 - 16 - button->rect.x, 12, clr );
+			CG_FillRect( button->rect.x, y - 10, SCREEN_WIDTH - 10 - 8 - 16 - button->rect.x, 12, clr );
 		}
 
 		CG_Text_Paint_Ext( DB_RANK_X, y, button->font->scalex, button->font->scaley, button->font->colour, CG_Debriefing_RankNameForClientInfo( ci ), 0, 0, 0, button->font->font );
@@ -1781,15 +1781,15 @@ void CG_Debriefing_MouseEvent( int x, int y ) {
 	cgs.cursorX += x;
 	if( cgs.cursorX < 0 ) {
 		cgs.cursorX = 0;
-	} else if( cgs.cursorX > 640 ) {
-		cgs.cursorX = 640;
+	} else if( cgs.cursorX > SCREEN_WIDTH ) {
+		cgs.cursorX = SCREEN_WIDTH;
 	}
 
 	cgs.cursorY += y;
 	if( cgs.cursorY < 0 ) {
 		cgs.cursorY = 0;
-	} else if( cgs.cursorY > 480 ) {
-		cgs.cursorY = 480;
+	} else if( cgs.cursorY > SCREEN_HEIGHT ) {
+		cgs.cursorY = SCREEN_HEIGHT;
 	}
 }
 

@@ -103,7 +103,7 @@ panel_button_text_t objectivePanelTxt = {
 panel_button_t rightLimboPannel = {
 	"gfx/limbo/limbo_back",
 	NULL,
-	{ 440, 0, 200, 480 },
+	{ 440, 0, 200, SCREEN_HEIGHT },
 	{ 0, 0, 0, 0, 0, 0, 0, 0 },
 	NULL,	/* font		*/
 	NULL,	/* keyDown	*/
@@ -318,7 +318,7 @@ panel_button_t leftFrame0##number = {	\
 
 #define LF_Y1 23
 #define LF_Y2 375
-#define LF_Y3 480
+#define LF_Y3 SCREEN_HEIGHT
 
 #define LF_H1 (LF_Y1 - 0)
 #define LF_H2 (LF_Y2 - LF_Y1)

@@ -98,7 +98,7 @@
 
 // MV overlay
 #define MVINFO_TEXTSIZE		10
-#define MVINFO_RIGHT		640 - 3
+#define MVINFO_RIGHT		SCREEN_WIDTH - 3
 #define MVINFO_TOP			100
 
 #define MAX_WINDOW_COUNT		10
@@ -3336,7 +3336,7 @@ typedef struct {
 extern rankicon_t rankicons[NUM_EXPERIENCE_LEVELS][2];
 
 #define TAB_LEFT_WIDTH 178
-#define TAB_LEFT_EDGE (640-TAB_LEFT_WIDTH)
+#define TAB_LEFT_EDGE (SCREEN_WIDTH-TAB_LEFT_WIDTH)
 
 fireteamData_t* CG_IsOnSameFireteam( int clientNum, int clientNum2 );
 

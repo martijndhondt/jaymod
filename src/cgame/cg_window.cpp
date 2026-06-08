@@ -487,7 +487,7 @@ void CG_windowDraw(void)
 			tmp = w->targetTime - t_offset;
 			if(w->effects & WFX_SCROLLUP) {
 				if(tmp > 0) {
-					y += (480 - y) * tmp / w->targetTime;//(100 * tmp / w->targetTime) / 100;
+					y += (SCREEN_HEIGHT - y) * tmp / w->targetTime;//(100 * tmp / w->targetTime) / 100;
 				} else {
 					w->state = WSTATE_COMPLETE;
 				}
@@ -501,8 +501,8 @@ void CG_windowDraw(void)
 		} else if(w->state == WSTATE_SHUTDOWN) {
 			tmp = w->targetTime - t_offset;
 			if(w->effects & WFX_SCROLLUP) {
-				if(tmp > 0) y = int( w->curY + (480 - w->y) * t_offset / w->targetTime );
-				if(tmp < 0 || y >= 480) {
+				if(tmp > 0) y = int( w->curY + (SCREEN_HEIGHT - w->y) * t_offset / w->targetTime );
+				if(tmp < 0 || y >= SCREEN_HEIGHT) {
 					w->state = WSTATE_OFF;
 					fCleanup = qtrue;
 					continue;
@@ -604,8 +604,8 @@ void CG_windowNormalizeOnText(cg_window_t *w)
 	w->h += 3;
 
 	// Set up bottom alignment
-	if(w->x < 0) w->x += 640 - w->w;
-	if(w->y < 0) w->y += 480 - w->h;
+	if(w->x < 0) w->x += SCREEN_WIDTH - w->w;
+	if(w->y < 0) w->y += SCREEN_HEIGHT - w->h;
 }
 
 
@@ -734,8 +734,8 @@ void CG_cursorUpdate(void)
 		// Allow for limbo'd updates as well
 		trap_GetUserCmd(trap_GetCurrentCmdNumber(), &cg_pmove.cmd);
 
-		nx = 640.0 * (65536.0 - cg_pmove.cmd.angles[1]) / 65536.0;
-		ny = 480.0 / 65536.0 * ((int_m_pitch.value < 0.0) ? (65536.0 - cg_pmove.cmd.angles[0]) : cg_pmove.cmd.angles[0]);
+		nx = SCREEN_WIDTH * (65536.0 - cg_pmove.cmd.angles[1]) / 65536.0;
+		ny = SCREEN_HEIGHT / 65536.0 * ((int_m_pitch.value < 0.0) ? (65536.0 - cg_pmove.cmd.angles[0]) : cg_pmove.cmd.angles[0]);
 
 		fSelect = ((cg_pmove.cmd.buttons & BUTTON_ATTACK) != 0) ? qtrue : qfalse;
 
@@ -788,19 +788,19 @@ void CG_cursorUpdate(void)
 					if(w->m_x > 0 && w->m_y > 0) {
 						if(fResize) {
 							w->w += nx - w->m_x;
-							if(w->x + w->w > 640-2) w->w = 640 - 2 - w->x;
+							if(w->x + w->w > SCREEN_WIDTH-2) w->w = SCREEN_WIDTH - 2 - w->x;
 							if(w->w < 64) w->w = 64;
 
 							w->h += ny - w->m_y;
-							if(w->y + w->h > 480-2) w->h = 480 - 2 - w->y;
+							if(w->y + w->h > SCREEN_HEIGHT-2) w->h = SCREEN_HEIGHT - 2 - w->y;
 							if(w->h < 48) w->h = 48;
 						} else {
 							w->x += nx - w->m_x;
-							if(w->x + w->w > 640-2) w->x = 640 - 2 - w->w;
+							if(w->x + w->w > SCREEN_WIDTH-2) w->x = SCREEN_WIDTH - 2 - w->w;
 							if(w->x < 2) w->x = 2;
 
 							w->y += ny - w->m_y;
-							if(w->y + w->h > 480-2) w->y = 480 - 2 - w->h;
+							if(w->y + w->h > SCREEN_HEIGHT-2) w->y = SCREEN_HEIGHT - 2 - w->h;
 							if(w->y < 2) w->y = 2;
 						}
 					}
