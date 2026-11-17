@@ -250,9 +250,15 @@ void UI_AdjustFrom640( float *x, float *y, float *w, float *h ) {
 	*h *= uiInfo.uiDC.scale;
 #endif
 
-	*x = *x * uiInfo.uiDC.xscale + uiInfo.uiDC.bias;
+	// full-width backdrops cover the pillarbox margins too
+	if (uiInfo.uiDC.bias > 0 && *x <= 0 && *x + *w >= 640) {
+		*x = 0;
+		*w = uiInfo.uiDC.glconfig.vidWidth;
+	} else {
+		*x = *x * uiInfo.uiDC.xscale + uiInfo.uiDC.bias;
+		*w *= uiInfo.uiDC.xscale;
+	}
 	*y *= uiInfo.uiDC.yscale;
-	*w *= uiInfo.uiDC.xscale;
 	*h *= uiInfo.uiDC.yscale;
 
 }
