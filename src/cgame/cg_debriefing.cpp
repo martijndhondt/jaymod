@@ -1300,6 +1300,7 @@ qboolean CG_Debriefing_Draw( void ) {
 	}
 
 	CG_RestrictScreenWidth(true);
+	CG_DrawPillarbox();
 
 	switch( cgs.dbMode ) {
 		case 1:
@@ -1781,15 +1782,15 @@ void CG_Debriefing_MouseEvent( int x, int y ) {
 	cgs.cursorX += x;
 	if( cgs.cursorX < 0 ) {
 		cgs.cursorX = 0;
-	} else if( cgs.cursorX > SCREEN_WIDTH ) {
-		cgs.cursorX = SCREEN_WIDTH;
+	} else if( cgs.cursorX > 640 ) {
+		cgs.cursorX = 640;
 	}
 
 	cgs.cursorY += y;
 	if( cgs.cursorY < 0 ) {
 		cgs.cursorY = 0;
-	} else if( cgs.cursorY > SCREEN_HEIGHT ) {
-		cgs.cursorY = SCREEN_HEIGHT;
+	} else if( cgs.cursorY > 480 ) {
+		cgs.cursorY = 480;
 	}
 }
 

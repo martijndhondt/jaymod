@@ -65,6 +65,24 @@ bool CG_IsScreenWidthRestricted()
 	return customScreenWidth;
 }
 
+// Restricted 640x480 screens keep a 4:3 aspect on wide displays; this is the width of each side bar.
+float CG_PillarboxWidth()
+{
+	return 0.5f * (cgs.glconfig.vidWidth - 640.f * cgs.screenYScale);
+}
+
+void CG_DrawPillarbox()
+{
+	const float w = CG_PillarboxWidth();
+	if (w <= 0.f)
+		return;
+
+	trap_R_SetColor(colorBlack);
+	trap_R_DrawStretchPic(0, 0, w, cgs.glconfig.vidHeight, 0, 0, 0, 0, cgs.media.whiteShader);
+	trap_R_DrawStretchPic(cgs.glconfig.vidWidth - w, 0, w, cgs.glconfig.vidHeight, 0, 0, 0, 0, cgs.media.whiteShader);
+	trap_R_SetColor(NULL);
+}
+
 /*
 ================
 CG_AdjustFrom640
@@ -91,10 +109,16 @@ void CG_AdjustFrom640( float *x, float *y, float *w, float *h ) {
 	}*/
 
 	if (CG_IsScreenWidthRestricted()) {
-		float scale = (float)cgs.glconfig.vidWidth / 640.f;
-		*x *= scale;
-		*w *= scale;
-}
+		const float offset = CG_PillarboxWidth();
+		if (offset > 0.f) {
+			*x = *x * cgs.screenYScale + offset;
+			*w *= cgs.screenYScale;
+		} else {
+			const float scale = (float)cgs.glconfig.vidWidth / 640.f;
+			*x *= scale;
+			*w *= scale;
+		}
+	}
 	else {
 		*x *= cgs.screenXScale;
 		*w *= cgs.screenXScale;

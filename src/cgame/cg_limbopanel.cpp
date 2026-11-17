@@ -2552,6 +2552,7 @@ qboolean CG_LimboPanel_Draw( void ) {
 //	panel_button_t** buttons = limboPanelButtons;
 
 	CG_RestrictScreenWidth(true);
+	CG_DrawPillarbox();
 
 	hilight = BG_PanelButtonsGetHighlightButton( limboPanelButtons );
 	if( hilight && hilight != lastHighlight ) {
