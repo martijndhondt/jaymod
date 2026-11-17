@@ -7432,7 +7432,8 @@ void _UI_Init( qboolean inGameLoad ) {
 	uiInfo.uiDC.yscale = uiInfo.uiDC.glconfig.vidHeight * (1.0/480.0);
 	uiInfo.uiDC.xscale = uiInfo.uiDC.glconfig.vidWidth * (1.0/640.0);
 	if ( uiInfo.uiDC.glconfig.vidWidth * 480 > uiInfo.uiDC.glconfig.vidHeight * 640 ) {
-		// wide screen
+		// wide screen: keep 4:3 aspect, centered
+		uiInfo.uiDC.xscale = uiInfo.uiDC.yscale;
 		uiInfo.uiDC.bias = 0.5 * ( uiInfo.uiDC.glconfig.vidWidth - ( uiInfo.uiDC.glconfig.vidHeight * (640.0/480.0) ) );
 	}
 	else {
@@ -7637,11 +7638,13 @@ UI_MouseEvent
 void _UI_MouseEvent( int dx, int dy )
 {
 	// update mouse screen position
+	// allow the cursor into the pillarbox margins on wide screens
+	const int margin = int(uiInfo.uiDC.bias / uiInfo.uiDC.xscale);
 	uiInfo.uiDC.cursorx += dx;
-	if (uiInfo.uiDC.cursorx < 0)
-		uiInfo.uiDC.cursorx = 0;
-	else if (uiInfo.uiDC.cursorx > SCREEN_WIDTH)
-		uiInfo.uiDC.cursorx = SCREEN_WIDTH;
+	if (uiInfo.uiDC.cursorx < -margin)
+		uiInfo.uiDC.cursorx = -margin;
+	else if (uiInfo.uiDC.cursorx > SCREEN_WIDTH + margin)
+		uiInfo.uiDC.cursorx = SCREEN_WIDTH + margin;
 
 	uiInfo.uiDC.cursory += dy;
 	if (uiInfo.uiDC.cursory < 0)

@@ -263,6 +263,7 @@ void CG_DrawConnectScreen( qboolean interactive, qboolean forcerefresh ) {
 	}
 
 	CG_RestrictScreenWidth(true);
+	CG_DrawPillarbox();
 
 	// Black out the background
 	CG_FillRect( -10, -10, 650, 490, colorBlack );

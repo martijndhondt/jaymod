@@ -4599,10 +4599,14 @@ qboolean Item_Bind_HandleKey(itemDef_t *item, int key, qboolean down) {
 
 
 void AdjustFrom640(float *x, float *y, float *w, float *h) {
-	//*x = *x * DC->scale + DC->bias;
-	*x *= DC->xscale;
+	if (DC->bias > 0 && *x <= 0 && *x + *w >= 640) {
+		*x = 0;
+		*w = DC->glconfig.vidWidth;
+	} else {
+		*x = *x * DC->xscale + DC->bias;
+		*w *= DC->xscale;
+	}
 	*y *= DC->yscale;
-	*w *= DC->xscale;
 	*h *= DC->yscale;
 }
 
