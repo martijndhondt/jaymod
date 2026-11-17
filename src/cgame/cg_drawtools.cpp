@@ -71,6 +71,12 @@ float CG_PillarboxWidth()
 	return 0.5f * (cgs.glconfig.vidWidth - 640.f * cgs.screenYScale);
 }
 
+int CG_PillarboxCursorMargin()
+{
+	const float w = CG_PillarboxWidth();
+	return w > 0.f ? int(w / cgs.screenYScale) : 0;
+}
+
 void CG_DrawPillarbox()
 {
 	const float w = CG_PillarboxWidth();

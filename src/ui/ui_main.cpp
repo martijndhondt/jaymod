@@ -7638,11 +7638,13 @@ UI_MouseEvent
 void _UI_MouseEvent( int dx, int dy )
 {
 	// update mouse screen position
+	// allow the cursor into the pillarbox margins on wide screens
+	const int margin = int(uiInfo.uiDC.bias / uiInfo.uiDC.xscale);
 	uiInfo.uiDC.cursorx += dx;
-	if (uiInfo.uiDC.cursorx < 0)
-		uiInfo.uiDC.cursorx = 0;
-	else if (uiInfo.uiDC.cursorx > SCREEN_WIDTH)
-		uiInfo.uiDC.cursorx = SCREEN_WIDTH;
+	if (uiInfo.uiDC.cursorx < -margin)
+		uiInfo.uiDC.cursorx = -margin;
+	else if (uiInfo.uiDC.cursorx > SCREEN_WIDTH + margin)
+		uiInfo.uiDC.cursorx = SCREEN_WIDTH + margin;
 
 	uiInfo.uiDC.cursory += dy;
 	if (uiInfo.uiDC.cursory < 0)

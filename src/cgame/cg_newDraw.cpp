@@ -725,12 +725,13 @@ void CG_MouseEvent(int x, int y) {
 		case CGAME_EVENT_SPEAKEREDITOR:
 		case CGAME_EVENT_GAMEVIEW:
 		case CGAME_EVENT_CAMPAIGNBREIFING:
-		case CGAME_EVENT_FIRETEAMMSG:
+		case CGAME_EVENT_FIRETEAMMSG: {
+			const int margin = (cgameEvent_e)cgs.eventHandling == CGAME_EVENT_GAMEVIEW ? CG_PillarboxCursorMargin() : 0;
 			cgs.cursorX += x;
-			if( cgs.cursorX < 0 ) {
-				cgs.cursorX = 0;
-			} else if( cgs.cursorX > 640 ) {
-				cgs.cursorX = 640;
+			if( cgs.cursorX < -margin ) {
+				cgs.cursorX = -margin;
+			} else if( cgs.cursorX > 640 + margin ) {
+				cgs.cursorX = 640 + margin;
 			}
 
 			cgs.cursorY += y;
@@ -745,6 +746,7 @@ void CG_MouseEvent(int x, int y) {
 			}
 
 			break;
+		}
 		case CGAME_EVENT_DEMO:
 			cgs.cursorX += x;
 			if( cgs.cursorX < 0 ) {

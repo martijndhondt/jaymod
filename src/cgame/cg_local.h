@@ -2476,6 +2476,7 @@ void CG_Letterbox( float xsize, float ysize, qboolean center );
 void CG_RestrictScreenWidth(bool restrict);
 bool CG_IsScreenWidthRestricted();
 float CG_PillarboxWidth();
+int CG_PillarboxCursorMargin();
 void CG_DrawPillarbox();
 void CG_LerpColor2(vec4_t color1, vec4_t color2, vec4_t result, float factor);
 void CG_LerpColor3(vec4_t color1, vec4_t color2, vec4_t color3, vec4_t result, float factor);
