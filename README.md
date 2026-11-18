@@ -130,6 +130,20 @@ Requires GCC and the standard GNU toolchain. Produces `build/game/qagame_mp_x86.
 | `make release` | Optimised release build (`VARIANT=release`) |
 | `make pkg` | Build + create distributable archive |
 
+# Building your own fork
+
+ET clients keep every mod in one `jaymod` folder, and servers identify the pk3 by its checksum. On a pure server (`sv_pure 1`) two different builds with the same file name therefore do not clash: clients store downloads as `jaymod-<version>.<checksum>.pk3` and only use the one the server lists.
+
+They do clash when a player loads the mod from the **Mods** menu without connecting: the engine then picks one of the local `jaymod-*.pk3` files by name. To keep your build distinguishable, give it its own name or version in [`project/info.db`](project/info.db) before releasing:
+
+| Key | Effect | Example |
+|---|---|---|
+| `versionMajor` / `versionMinor` / `versionPoint` | Version in the pk3 name, `mod_version` and in-game info | `2.2.5` → `jaymod-2.2.5.pk3` |
+| `namef` | Package base name (pk3, archive) | `myjaymod` → `myjaymod-2.2.5.pk3` |
+| `website` | `mod_url` server info and `/about` | your repository URL |
+
+Never ship two different builds under the same version number. Changing `namef` only renames the package; the folder players install into (`fs_game`) stays whatever the server uses.
+
 # License
 
 This source is bound to the original terms from **id Software**. On top of that, I am releasing this source under the Apache 2.0 license. Feel free to use this codebase

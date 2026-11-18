@@ -899,18 +899,18 @@ Client::greeting()
         i = 0;
 
         // Replace valid tokens
-        while( i < int(sizeof(token)) && *s ) {
+        while( i < int(sizeof(token)) - 1 && *s ) {
             if ( *s == '[' ) {
                 if( !Q_strncmp( s, "[player]", 8 )) {
                     Q_strncpyz( temp, user.namex.c_str(), sizeof(temp) );
-                    strncat( token, temp, sizeof(token) );
-                    i += strlen( temp );
+                    Q_strcat( token, sizeof(token), temp );
+                    i = strlen( token );
                     s += 8;
                     continue;
                 }
                 else if( !Q_strncmp( s, "[level]", 7 )) {
-                    strncat( token, lev.name.c_str(), sizeof(token) );
-                    i += lev.name.length();
+                    Q_strcat( token, sizeof(token), lev.name.c_str() );
+                    i = strlen( token );
                     s += 7;
                     continue;
                 }
