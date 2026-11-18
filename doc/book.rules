@@ -132,7 +132,7 @@ $(MODULE.DOC.out.styles): $(MODULE.DOC.stage/)%: $(PROJECT/)doc/lib/%
 
 $(MODULE.DOC.out.eproject): $(PROJECT/)project/info.py $(PROJECT/)project/info.db
 	$(call print.HEADER,GENERATING,$@)
-	@$< -xml $(PROJECT/)project/info.db > $@
+	@$< -xml $(PROJECT/)project/info.db > $@.tmp && mv $@.tmp $@
 
 $(MODULE.DOC.out.ecmd): $(PROJECT/)doc/lib/gen-entity.py
 	$(call print.HEADER,GENERATING,$@)

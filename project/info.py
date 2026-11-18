@@ -25,6 +25,16 @@ def toBoolean(value):
 
 ###############################################################################
 
+def runGit(*args):
+    # git is optional: without it (or outside a checkout) repo fields keep their defaults
+    try:
+        p = subprocess.run(['git'] + list(args), capture_output=True, text=True)
+    except OSError:
+        return None
+    if p.returncode != 0:
+        return None
+    return p.stdout.strip()
+
 def fetchRepoData():
     data = {
         'URL'    : '',
@@ -33,26 +43,21 @@ def fetchRepoData():
         'LCRev'  : '0',
         'LCDate' : '', }
 
-    p = subprocess.run(['git', 'remote', 'get-url', 'origin'],
-                       capture_output=True, text=True)
-    if p.returncode == 0:
-        url = p.stdout.strip()
+    url = runGit('remote', 'get-url', 'origin')
+    if url is not None:
         # Strip embedded credentials (user:token@host -> host).
         url_clean = re.sub(r'https?://[^@]*@', lambda m: m.group(0).split('://')[0] + '://', url)
         data['URL']  = url_clean
         data['UUID'] = url_clean
 
-    p = subprocess.run(['git', 'rev-list', '--count', 'HEAD'],
-                       capture_output=True, text=True)
-    if p.returncode == 0:
-        count = p.stdout.strip()
+    count = runGit('rev-list', '--count', 'HEAD')
+    if count is not None:
         data['Rev']   = count
         data['LCRev'] = count
 
-    p = subprocess.run(['git', 'log', '-1', '--format=%ci'],
-                       capture_output=True, text=True)
-    if p.returncode == 0:
-        data['LCDate'] = p.stdout.strip()
+    date = runGit('log', '-1', '--format=%ci')
+    if date is not None:
+        data['LCDate'] = date
 
     return data
 
@@ -399,5 +404,5 @@ try:
     p = Project(dbFileName)
     p.dump(mode)
 except (InfoException, IOError) as x:
-    print(str(x))
+    print(str(x), file=sys.stderr)
     sys.exit(1)

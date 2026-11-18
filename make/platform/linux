@@ -82,6 +82,7 @@ CXX.fnCompile = $(call print.COMMAND.normal,$(CXX),$(2),$(strip \
 	$(CXX.opt.D) \
 	$(CXX.opt.I) \
 	$(CXX.opt.U) \
+	-MMD -MP \
 	-c $(1) -o $(2) \
 	))
 
@@ -95,6 +96,7 @@ CXX.fnPrecompile = $(call print.COMMAND.magenta,$(CXX),$(2),$(strip \
 	$(CXX.opt.D) \
 	$(CXX.opt.I) \
 	$(CXX.opt.U) \
+	-MMD -MP -MF $(subst .$(CXX.pch.ext)/,.$(CXX.pch.ext)-,$(2)).d \
 	-c $(1) -o $(2) \
 	))
 
