@@ -2,7 +2,7 @@ name  = Jaymod
 namef = jaymod
 namex = ^xJay^4mod
 
-website   = http://jaymod.clanfu.org
+website   = https://github.com/martijndhondt/jaymod
 author    = Jaybird
 copyright = Copyright (c) 2005-2011 Jaybird. All Rights Reserved.
 irc       = irc.freenode.net #jaymod
