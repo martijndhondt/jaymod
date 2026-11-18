@@ -96,19 +96,19 @@ The mod uses a GNU make-based build system originally designed (2006) to cross-c
 
 ## Windows (MinGW64 / MSYS2) — recommended
 
-Install [MSYS2](https://www.msys2.org/) and the MinGW32 toolchain:
+Install [MSYS2](https://www.msys2.org/), then the 32-bit compiler and build tools:
 
 ```bash
-pacman -S mingw-w64-i686-toolchain
+pacman -S --needed mingw-w64-i686-gcc make m4 zip python
 ```
 
-Then build from the MSYS2 shell:
+Then build from the **MSYS2 MINGW32** shell:
 
 ```bash
-mingw32-make.exe PLATFORM=mingw "GCC/=/path/to/mingw32/"
-# Example using the default MSYS2 install path:
-mingw32-make.exe PLATFORM=mingw "GCC/=/c/msys64/mingw32/"
+make -j8 PLATFORM=mingw "GCC/=/mingw32/" AR=/mingw32/bin/ar pkg
 ```
+
+`git` is optional; with it on `PATH` the build embeds the repository revision.
 
 The output DLL is placed at `build.mingw/game/qagame_mp_x86.dll`. No external runtime DLLs are needed — `libwinpthread` is linked statically.
 
@@ -125,7 +125,7 @@ Requires GCC and the standard GNU toolchain. Produces `build/game/qagame_mp_x86.
 | Target | Description |
 |---|---|
 | `make` / `make all` | Compile and link everything |
-| `make clean` | Remove all build output (run after changing headers) |
+| `make clean` | Remove all build output |
 | `make debug` | Build with debug symbols (`VARIANT=debug`) |
 | `make release` | Optimised release build (`VARIANT=release`) |
 | `make pkg` | Build + create distributable archive |

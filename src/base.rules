@@ -7,8 +7,9 @@ MODULE.BASE.build: $(MODULE.BASE.a)
 
 $(MODULE.BASE.prj): $(PROJECT/)project/info.py $(PROJECT/)project/info.db
 	$(call print.HEADER,GENERATING,$@)
-	@$< -h $(PROJECT/)project/info.db > $@
+	@$< -h $(PROJECT/)project/info.db > $@.tmp && mv $@.tmp $@
 
+$(MODULE.BASE.pchs): $(MODULE.BASE.prj)
 $(MODULE.BASE.pchs): $(BUILD/)base/public.h.$(CXX.pch.ext)/%: $(PROJECT/)src/base/public.h
 	$(call CXX.fnPrecompile,$<,$@,$*)
 
@@ -22,17 +23,13 @@ $(MODULE.BASE.a): $(MODULE.BASE.objs)
 
 ###############################################################################
 
+# The .inc files are committed sources; only an explicit `make scramble` regenerates them.
+SCRAMBLE.h   = $(PROJECT/)src/bgame/bg_entity_event.h.inc
+SCRAMBLE.cpp = $(PROJECT/)src/bgame/bg_entity_event.cpp.inc
+
 .PHONY: scramble
-scramble: $(PROJECT/)src/bgame/bg_entity_event.h.inc
-scramble: $(PROJECT/)src/bgame/bg_entity_event.cpp.inc
-
-.PHONY: $(PROJECT/)src/bgame/bg_entity_event.h.inc
-.PHONY: $(PROJECT/)src/bgame/bg_entity_event.cpp.inc
-
-$(PROJECT/)src/bgame/bg_entity_event.h.inc:
-	$(call print.HEADER,GENERATING,$@)
-	$(PROJECT/)src/enum-scramble.py -h $@ > $@.$$$$ && mv $@.$$$$ $@
-
-$(PROJECT/)src/bgame/bg_entity_event.cpp.inc: $(PROJECT/)src/bgame/bg_entity_event.h.inc
-	$(call print.HEADER,GENERATING,$@)
-	$(PROJECT/)src/enum-scramble.py -cpp $< > $@.$$$$ && mv $@.$$$$ $@
+scramble:
+	$(call print.HEADER,GENERATING,$(SCRAMBLE.h))
+	$(PROJECT/)src/enum-scramble.py -h $(SCRAMBLE.h) > $(SCRAMBLE.h).$$$$ && mv $(SCRAMBLE.h).$$$$ $(SCRAMBLE.h)
+	$(call print.HEADER,GENERATING,$(SCRAMBLE.cpp))
+	$(PROJECT/)src/enum-scramble.py -cpp $(SCRAMBLE.h) > $(SCRAMBLE.cpp).$$$$ && mv $(SCRAMBLE.cpp).$$$$ $(SCRAMBLE.cpp)

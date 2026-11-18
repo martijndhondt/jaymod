@@ -913,6 +913,9 @@ default values.
 #define	CVAR_DELAYED		32768	// marks variable in cgame as delayed change
 #define	CVAR_JAYMODCB_INIT	65536	// causes callback to be invoked during game init
 
+// Jaymod-only bookkeeping flags; ET Legacy uses these bits itself, so never pass them to the engine.
+#define	CVAR_JAYMOD_PRIVATE	(CVAR_JAYMODINFO | CVAR_DELAYED | CVAR_JAYMODCB_INIT)
+
 // nothing outside the Cvar_*() functions should modify these fields!
 typedef struct cvar_s {
 	char		*name;

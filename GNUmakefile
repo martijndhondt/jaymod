@@ -44,4 +44,4 @@ endif
 $(BUILD/)make/project.mk: $(PROJECT/)project/info.py $(PROJECT/)project/info.db
 	$(call print.HEADER,GENERATING,$@)
 	@mkdir -p $(dir $@)
-	@$< -mk $(PROJECT/)project/info.db > $@
+	@$< -mk $(PROJECT/)project/info.db > $@.tmp && mv $@.tmp $@
