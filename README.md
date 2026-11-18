@@ -10,6 +10,8 @@ This is the source for the last release of Jaymod, which is version 2.0.0.
 
 | Version | Tag | Notes |
 |---|---|---|
+| [2.2.5](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.5) | `v2.2.5` | versioned pk3 name, memory-safety fixes, quieter server log, reliable builds |
+| [2.2.4](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.4) | `v2.2.4` | widescreen and ultrawide support |
 | [2.2.3](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.3) | `v2.2.3` | configurable announce HP display position |
 | [2.2.2 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.2-etlegacy) | `v2.2.2-etlegacy` | dynamite countdown timer built-in |
 | [2.2.1 (ET Legacy)](https://github.com/martijndhondt/jaymod/releases/tag/v2.2.1-etlegacy) | `v2.2.1-etlegacy` | announcehp built-in, CI full package builds |
