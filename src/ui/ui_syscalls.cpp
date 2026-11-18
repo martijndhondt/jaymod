@@ -29,7 +29,7 @@ int trap_Milliseconds( void ) {
 }
 
 void trap_Cvar_Register( vmCvar_t *cvar, const char *var_name, const char *value, int flags ) {
-	engine( UI_CVAR_REGISTER, cvar, var_name, value, flags );
+	engine( UI_CVAR_REGISTER, cvar, var_name, value, flags & ~CVAR_JAYMOD_PRIVATE );
 }
 
 void trap_Cvar_Update( vmCvar_t *cvar ) {

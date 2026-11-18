@@ -39,7 +39,7 @@ int		trap_Milliseconds( void ) {
 }
 
 void	trap_Cvar_Register( vmCvar_t *vmCvar, const char *varName, const char *defaultValue, int flags ) {
-	Engine::ptr( CG_CVAR_REGISTER, vmCvar, varName, defaultValue, flags );
+	Engine::ptr( CG_CVAR_REGISTER, vmCvar, varName, defaultValue, flags & ~CVAR_JAYMOD_PRIVATE );
 }
 
 void	trap_Cvar_Update( vmCvar_t *vmCvar ) {

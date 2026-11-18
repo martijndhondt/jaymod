@@ -83,7 +83,7 @@ void	trap_SendConsoleCommand( int exec_when, const char *text ) {
 }
 
 void	trap_Cvar_Register( vmCvar_t *cvar, const char *var_name, const char *value, int flags ) {
-	Engine::ptr( G_CVAR_REGISTER, cvar, var_name, value, flags );
+	Engine::ptr( G_CVAR_REGISTER, cvar, var_name, value, flags & ~CVAR_JAYMOD_PRIVATE );
 }
 
 void	trap_Cvar_Update( vmCvar_t *cvar ) {
