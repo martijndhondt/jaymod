@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to (re)build and upload assets for (e.g. v2.2.5)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+  windows:
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+  package:
+    needs: [linux, windows]
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      # Each platform build ships a pk3 with only its own client libraries.
+      # Servers must offer one pk3 that works for Windows and Linux players.
+      - name: Combine platforms into one package
+        run: |
+          set -euo pipefail
+          LTAR=$(find artifacts/jaymod-linux -name 'jaymod-*.tar.gz')
+          WTAR=$(find artifacts/jaymod-windows -name 'jaymod-*.tar.gz')
+          BASE=$(basename "$WTAR" .tar.gz)
+          PK3="$BASE.pk3"
+
+          mkdir -p lin win libs out
+          tar xzf "$LTAR" -C lin
+          tar xzf "$WTAR" -C win
+
+          unzip -q "lin/$BASE/$PK3" '*.so' -d libs
+          (cd libs && zip -q -r "../win/$BASE/$PK3" .)
+          cp "lin/$BASE/qagame.mp.i386.so" "win/$BASE/"
+
+          tar czf "out/$BASE.tar.gz" -C win "$BASE"
+          cp "win/$BASE/$PK3" "win/$BASE/qagame_mp_x86.dll" "win/$BASE/qagame.mp.i386.so" out/
+
+          echo "Client libraries in $PK3:"
+          unzip -l "out/$PK3" | grep -E '\.(so|dll)$'
+          test "$(unzip -l "out/$PK3" | grep -cE '(cgame|ui)(_mp_x86\.dll|\.mp\.i386\.so)$')" -eq 4
+          ls -l out
+
+      - name: Upload to GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          gh release upload "$TAG" out/* --clobber --repo "${{ github.repository }}"
